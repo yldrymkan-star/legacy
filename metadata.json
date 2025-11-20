@@ -1,0 +1,7 @@
+{
+  "name": "The Al-Sadr Legacy AI",
+  "description": "An AI-driven knowledge assistant providing information, summaries, and jurisprudential interpretations based on Sayyid Muhammad Muhammad Sadiq al-Sadr's works and biography, with features for multimodal input, advanced reasoning, and real-time audio interaction.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
