@@ -39,15 +39,6 @@
         .fade-in { animation: fadeIn 0.8s ease-out forwards; opacity: 0; transform: translateY(10px); }
         @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
-  }
-}
-</script>
 </head>
 <body class="min-h-screen relative">
 
@@ -56,31 +47,24 @@
 
     <script type="text/babel">
         
-        const SYSTEM_PROMPT_AR = `
+        // ==========================================
+        // ضع مفتاح API هنا
+        // ==========================================
+        const API_KEY = "AIzaSyDAbN7hKebJF76qlW_a-lcH5Er1eMlcHew"; 
+        
+        const SYSTEM_PROMPT = `
         أنت باحث متخصص في التراث الفكري للسيد الشهيد محمد محمد صادق الصدر (قدس سره).
         أجب عن الأسئلة بأسلوب رصين، فقهي أو عقائدي بحسب السياق، واستخدم لغة عربية فصحى عالية الجودة.
         لا تقل أنك ذكاء اصطناعي، بل قدم الإجابة مباشرة.
         `;
-        const SYSTEM_PROMPT_EN = `
-        You are a specialized researcher in the intellectual heritage of Sayyid Muhammad Muhammad Sadiq al-Sadr.
-        Answer questions in a sober, jurisprudential, or doctrinal style depending on the context, and use high-quality formal English.
-        Do not say you are an AI; provide the answer directly.
-        `;
 
-        const { useState, useEffect } = React;
+        const { useState } = React;
 
         const App = () => {
             const [query, setQuery] = useState("");
             const [loading, setLoading] = useState(false);
             const [result, setResult] = useState(null);
             const [error, setError] = useState(null);
-            const [language, setLanguage] = useState("ar");
-
-            useEffect(() => {
-                document.documentElement.lang = language;
-                document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
-                document.title = language === 'ar' ? 'تراث الصدر - الذكاء الاصطناعي' : 'Al-Sadr Legacy - AI';
-            }, [language]);
 
             const handleSearch = async (e) => {
                 e.preventDefault();
@@ -91,27 +75,22 @@
                 setError(null);
 
                 try {
-                    const apiKey = process.env.API_KEY;
-                    if(!apiKey) {
-                        const errorMsg = language === 'ar' ? "مفتاح API غير متوفر. يرجى التأكد من تكوينه في البيئة." : "API key not available. Please ensure it is configured in the environment.";
-                        throw new Error(errorMsg);
+                    if(!API_KEY || API_KEY.includes("ضع_مفتاحك")) {
+                        alert("الرجاء التأكد من وضع مفتاح API");
+                        setLoading(false);
+                        return;
                     }
-                    
-                    const systemPrompt = language === 'ar' ? SYSTEM_PROMPT_AR : SYSTEM_PROMPT_EN;
-                    const questionPrefix = language === 'ar' ? "السؤال: " : "Question: ";
 
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                    // ============================================================
+                    // التحديث: استخدام الموديل الموجود في قائمتك (gemini-2.0-flash)
+                    // ============================================================
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                            contents: [{ parts: [{ text: systemPrompt + "\n\n" + questionPrefix + query }] }]
+                            contents: [{ parts: [{ text: SYSTEM_PROMPT + "\n\nالسؤال: " + query }] }]
                         })
                     });
-                    
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.error?.message || `HTTP Error: ${response.status}`);
-                    }
 
                     const data = await response.json();
                     
@@ -123,12 +102,8 @@
                         setResult({
                             question: query,
                             answer: data.candidates[0].content.parts[0].text,
+                            source: "تحليل تراث السيد الصدر (قدس سره)"
                         });
-                    } else {
-                        if (data.promptFeedback?.blockReason) {
-                            throw new Error(language === 'ar' ? `تم حظر الطلب: ${data.promptFeedback.blockReason}` : `Request was blocked: ${data.promptFeedback.blockReason}`);
-                        }
-                        throw new Error(language === 'ar' ? 'لم يتم العثور على إجابة.' : 'No answer found.');
                     }
                 } catch (error) {
                     console.error(error);
@@ -137,55 +112,26 @@
                     setLoading(false);
                 }
             };
-            
-            const T = {
-                ar: {
-                    title: "تراث الصدر",
-                    subtitle: "بحث في الموسوعة الفقهية والعقائدية",
-                    placeholder: "اكتب سؤالك هنا...",
-                    search: "بحث",
-                    searching: "جاري البحث...",
-                    errorTitle: "حدث خطأ تقني",
-                    question: "السؤال",
-                },
-                en: {
-                    title: "The Al-Sadr Legacy",
-                    subtitle: "A search in the jurisprudential and doctrinal encyclopedia",
-                    placeholder: "Type your question here...",
-                    search: "Search",
-                    searching: "Searching...",
-                    errorTitle: "A technical error occurred",
-                    question: "Question",
-                }
-            };
 
             return (
                 <div className="max-w-3xl mx-auto px-6 py-12 flex flex-col min-h-screen">
                     <header className={`text-center transition-all duration-500 ${result || error ? 'mt-4 mb-8' : 'mt-20 mb-12'}`}>
-                        <h1 className="text-4xl md:text-5xl font-heading font-bold text-heritage-dark">{T[language].title}</h1>
-                        <p className="mt-4 text-lg text-heritage-dark/70 font-body">{T[language].subtitle}</p>
+                        <h1 className="text-4xl md:text-5xl font-heading font-bold text-heritage-dark">تراث الصدر</h1>
+                        <p className="mt-4 text-lg text-heritage-dark/70 font-body">بحث في الموسوعة الفقهية والعقائدية</p>
                     </header>
 
                     <div className="sticky top-4 z-20 mb-10">
                         <div className="shadow-lg rounded-2xl bg-white p-2 border border-paper-200">
-                            <form onSubmit={handleSearch} className="flex items-center gap-2">
-                                <select 
-                                    value={language} 
-                                    onChange={(e) => setLanguage(e.target.value)}
-                                    className="bg-paper-100 border border-paper-200 text-heritage-dark font-heading rounded-xl px-4 h-12 focus:outline-none focus:ring-2 focus:ring-heritage-gold"
-                                >
-                                    <option value="ar">العربية</option>
-                                    <option value="en">English</option>
-                                </select>
+                            <form onSubmit={handleSearch} className="flex items-center">
                                 <input 
                                     type="text" 
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
                                     className="flex-1 bg-transparent border-none outline-none text-xl font-body px-4 text-heritage-dark h-12"
-                                    placeholder={T[language].placeholder}
+                                    placeholder="اكتب سؤالك هنا..."
                                 />
-                                <button type="submit" disabled={loading} className="bg-heritage-gold text-white px-6 py-2 rounded-xl font-heading hover:bg-heritage-accent transition font-bold h-12">
-                                    {loading ? T[language].searching : T[language].search}
+                                <button type="submit" disabled={loading} className="bg-heritage-gold text-white px-6 py-2 rounded-xl font-heading hover:bg-heritage-accent transition font-bold">
+                                    {loading ? 'جاري البحث...' : 'بحث'}
                                 </button>
                             </form>
                         </div>
@@ -193,14 +139,14 @@
 
                     {error && (
                         <div className="fade-in bg-red-50 border border-red-200 rounded-xl p-4 text-center mb-8">
-                             <p className="text-red-700 font-heading font-bold mb-2">{T[language].errorTitle}</p>
+                             <p className="text-red-700 font-heading font-bold mb-2">حدث خطأ تقني</p>
                              <p className="text-red-600 font-body text-sm" dir="ltr">{error}</p>
                         </div>
                     )}
 
                     {result && (
                         <div className="fade-in bg-white rounded-xl border border-paper-200 shadow-xl overflow-hidden p-8">
-                            <h3 className="font-heading text-heritage-gold font-bold mb-4 text-lg">{T[language].question}: {result.question}</h3>
+                            <h3 className="font-heading text-heritage-gold font-bold mb-4 text-lg">السؤال: {result.question}</h3>
                             <div className="prose prose-xl max-w-none text-heritage-dark font-body leading-loose text-justify whitespace-pre-line">
                                 {result.answer}
                             </div>
