@@ -61,46 +61,79 @@
     <script type="text/babel">
         
         const API_KEY = "AIzaSyC4Om0d3llO5t-O4D8MdKiUTaCD7WGnbK4"; 
-        const ADMIN_EMAIL = "ahlaambreaa@gmail.com"; // 🔴 ضع إيميلك هنا
+        const ADMIN_EMAIL = "ahlaambreaa@gmail.com"; 
         const SUPABASE_URL = "https://tugwznooogptmabtydsj.supabase.co"; 
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1Z3d6bm9vb2dwdG1hYnR5ZHNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2NzA5MzIsImV4cCI6MjA3OTI0NjkzMn0.Xqlo29R4qIPstcRseUOW6_Cls9YwD8kNOzdAd-e8dF0"; 
 
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         const { useState, useEffect, useRef } = React;
 
+        // رابط PDF تجريبي
+        const SAMPLE_PDF = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
+
         const initialLibraryData = {
             books: {
-                sadr: [{ id: 1, title: "موسوعة الإمام المهدي (ع)", files: [{name: "الكتاب الكامل", type: "pdf", url: "https://example.com/book.pdf"}] }],
+                sadr: [{ id: 1, title: "موسوعة الإمام المهدي (ع)", files: [{name: "مثال للكتاب (تجريبي)", type: "pdf", url: SAMPLE_PDF}] }],
                 sadrist: [],
                 shia: []
             },
-            audio: {
-                friday: [],
-                lectures: [],
-                lessons: []
-            },
-            video: {
-                meetings: [],
-                documentaries: [],
-                friday_video: []
-            }
+            audio: { friday: [], lectures: [], lessons: [] },
+            video: { meetings: [], documentaries: [], friday_video: [] }
         };
 
+        // --- تم تحديث تصميم السيرة الذاتية لتكون أرقى وأكثر تفصيلاً ---
+        // تم تعديل الـ div الرئيسي هنا ليعتمد على سكرول الأب (main)
         const BiographyView = ({ onBack, t }) => (
-            <div className="flex flex-col h-full overflow-y-auto mobile-scroll p-6 animate-fade-in relative z-20 bg-royal-bg">
+            <div className="flex flex-col w-full p-6 animate-fade-in relative z-20 bg-royal-bg">
                 <button onClick={onBack} className="self-end mb-4 text-royal-goldDark font-bold flex items-center gap-2 hover:bg-white px-3 py-1 rounded-full shadow-sm border border-royal-gold/20">✕ إغلاق</button>
-                <div className="max-w-3xl mx-auto w-full bg-white p-8 rounded-2xl shadow-card border border-royal-gold/20">
-                    <h2 className={`text-3xl font-bold text-royal-ink text-center mb-6 ${t.fontHead} text-royal-goldDark`}>السيرة العطرة</h2>
-                    <div className="space-y-6 text-lg leading-relaxed text-justify text-gray-700 font-ar-text">
-                        <div className="flex justify-center mb-6">
-                            <div className="w-32 h-32 rounded-full bg-royal-bg border-4 border-royal-gold flex items-center justify-center overflow-hidden shadow-lg">
-                                <svg className="w-16 h-16 text-royal-goldDark/30" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-                            </div>
+                <div className="max-w-4xl mx-auto w-full bg-white p-8 md:p-12 rounded-3xl shadow-card border border-royal-gold/30 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-royal-gold/20 via-royal-gold to-royal-gold/20"></div>
+                    
+                    {/* --- 🔴 صورة السيرة الذاتية (التصميم الجديد) 🔴 --- */}
+                    <div className="flex justify-center mb-10 -mt-4 relative z-10">
+                        <div className="w-48 h-48 rounded-full bg-royal-bg border-[6px] border-royal-gold flex items-center justify-center overflow-hidden shadow-holy">
+                            <img 
+                                src="https://i.ibb.co/MyJbpPN8/photo.jpg" 
+                                alt="السيد الشهيد محمد الصدر" 
+                                className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                            />
                         </div>
-                        <p><strong>الاسم والنسب:</strong> هو السيد محمد بن السيد محمد صادق الصدر.</p>
-                        <p><strong>الولادة:</strong> 17 ربيع الأول 1362 هـ.</p>
-                        <p><strong>الشهادة:</strong> 4 ذي القعدة 1419 هـ.</p>
                     </div>
+                    
+                    <h2 className={`text-4xl font-bold text-royal-ink text-center mb-2 ${t.fontHead}`}>آية الله العظمى</h2>
+                    <h1 className={`text-3xl md:text-5xl font-bold text-royal-goldDark text-center mb-10 ${t.fontHead}`}>السيد محمد الصدر (قدس)</h1>
+                    
+                    <div className="space-y-8 text-lg leading-relaxed text-justify text-gray-700 font-ar-text relative z-10">
+                        
+                        <div className="bg-royal-bg/50 p-6 rounded-2xl border-r-4 border-royal-gold/60">
+                            <h3 className={`text-2xl font-bold text-royal-ink mb-3 ${t.fontHead} flex items-center gap-2`}>
+                                <span className="text-royal-gold">◈</span> النسب الشريف والولادة
+                            </h3>
+                            <p>هو السيد محمد بن السيد محمد صادق بن السيد محمد مهدي بن السيد إسماعيل الصدر، سليل الدوحة المحمدية العلوية الطاهرة. وُلد في الكاظمية المقدسة في 17 ربيع الأول عام 1362 هـ (يوم المولد النبوي الشريف).</p>
+                        </div>
+
+                        <div className="bg-royal-bg/50 p-6 rounded-2xl border-r-4 border-royal-gold/60">
+                            <h3 className={`text-2xl font-bold text-royal-ink mb-3 ${t.fontHead} flex items-center gap-2`}>
+                                <span className="text-royal-gold">◈</span> مكانته العلمية ومرجعيته
+                            </h3>
+                            <p>تتلمذ على يد كبار فقهاء عصره، أبرزهم السيد الشهيد محمد باقر الصدر والإمام الخوئي (قدس سرهما). نال درجة الاجتهاد في سن مبكرة. تصدى للمرجعية في ظرف عصيب، وقاد حوزة النجف الأشرف بحكمة وشجاعة نادرة، مُحيياً صلاة الجمعة التي كانت معطّلة لقرون، جاعلاً منها منبراً للوعي والإصلاح.</p>
+                        </div>
+
+                        <div className="bg-royal-bg/50 p-6 rounded-2xl border-r-4 border-royal-gold/60">
+                            <h3 className={`text-2xl font-bold text-royal-ink mb-3 ${t.fontHead} flex items-center gap-2`}>
+                                <span className="text-royal-gold">◈</span> المشروع المهدوي والإصلاحي
+                            </h3>
+                            <p>تميز طرحه بالعمق في القضية المهدوية من خلال موسوعته الفريدة (موسوعة الإمام المهدي). قاد مشروعاً إصلاحياً شاملاً (الحوزة الناطقة) يهدف لربط الدين بالمجتمع ومواجهة الانحراف والظلم، متجاوزاً الأسوار التقليدية للحوزة.</p>
+                        </div>
+                        
+                        <div className="bg-white p-6 rounded-2xl border border-red-100 shadow-sm text-center relative overflow-hidden">
+                            <div className="absolute inset-0 opacity-10 bg-red-50 pattern-dots"></div>
+                            <h3 className={`text-2xl font-bold text-red-800 mb-3 ${t.fontHead}`}>الشهادة الخالدة</h3>
+                             <p className="font-bold text-xl text-royal-ink">استشهد مع نجليه (مصطفى ومؤمل) في النجف الأشرف ليلة الجمعة 4 ذي القعدة 1419 هـ، على يد النظام البعثي الغاشم، ليختم حياته الشريفة بالشهادة في سبيل الله وإعلاء كلمته.</p>
+                        </div>
+
+                    </div>
+                     <div className="text-center mt-8 text-royal-goldDark/60 text-sm font-ar-text">رضوان الله تعالى عليه وحشره مع أجداده الطاهرين</div>
                 </div>
             </div>
         );
@@ -128,9 +161,15 @@
                 onBack(); 
             };
 
-            const handleOpenFile = (url) => {
-                if (url) window.open(url, '_blank');
-                else alert("عذراً، رابط الملف غير متوفر.");
+            // --- إصلاح نهائي لفتح الملفات ---
+            // تم تبسيط الدالة واستخدام window.open مباشرة لضمان العمل
+            const handleOpenFile = (e, url) => {
+                e.stopPropagation(); // منع تداخل النقرات
+                if (!url) {
+                    alert("عذراً، رابط الملف غير متوفر.");
+                    return;
+                }
+                window.open(url, '_blank');
             };
 
             const startAddCollection = () => {
@@ -165,10 +204,7 @@
                     };
                     setLibraryData(prev => ({
                         ...prev,
-                        [mode]: {
-                            ...prev[mode],
-                            [subCategory]: [...prev[mode][subCategory], newCollection]
-                        }
+                        [mode]: { ...prev[mode], [subCategory]: [...prev[mode][subCategory], newCollection] }
                     }));
                 } else if (activeAddContext.type === 'add_to_collection') {
                     setLibraryData(prev => ({
@@ -183,7 +219,6 @@
                         }
                     }));
                 }
-                
                 e.target.value = '';
                 setActiveAddContext(null);
                 setPendingItemName("");
@@ -194,15 +229,11 @@
                 if (confirm("هل أنت متأكد من حذف الكتاب/المجموعة بالكامل؟")) {
                     setLibraryData(prev => ({
                         ...prev,
-                        [mode]: {
-                            ...prev[mode],
-                            [subCategory]: prev[mode][subCategory].filter(item => item.id !== id)
-                        }
+                        [mode]: { ...prev[mode], [subCategory]: prev[mode][subCategory].filter(item => item.id !== id) }
                     }));
                 }
             };
 
-            // دالة حذف ملف فرعي
             const handleDeleteFile = (e, itemId, fileIndex) => {
                 e.stopPropagation();
                 if (confirm("هل أنت متأكد من حذف هذا الملف؟")) {
@@ -221,9 +252,18 @@
             };
 
             if (mode === 'home') {
+                // تم تعديل الـ div الرئيسي هنا ليعتمد على سكرول الأب
                 return (
-                    <div className="flex flex-col h-full overflow-y-auto mobile-scroll p-6 animate-fade-in bg-royal-bg z-20 relative">
+                    <div className="flex flex-col w-full p-6 animate-fade-in bg-royal-bg z-20 relative">
                         <button onClick={handleBack} className="self-end mb-4 text-royal-goldDark font-bold flex items-center gap-2 hover:bg-white px-3 py-1 rounded-full shadow-sm border border-royal-gold/20">✕ خروج</button>
+                        
+                        {/* --- 🔴 هنا صورة اللوغو في صفحة المكتبة (تم توحيد التصميم) 🔴 --- */}
+                        <div className="mb-6 flex justify-center">
+                             <div className="w-28 h-28 rounded-full bg-royal-bg border-4 border-royal-gold flex items-center justify-center overflow-hidden shadow-lg">
+                                <img src="https://i.ibb.co/MyJbpPN8/photo.jpg" alt="Library Logo" className="w-full h-full object-cover" />
+                            </div>
+                        </div>
+
                         <h2 className={`text-3xl font-bold text-royal-goldDark text-center mb-8 ${t.fontHead}`}>أقسام المكتبة</h2>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full">
                             {[
@@ -250,8 +290,9 @@
                     video: [ { id: 'friday_video', label: 'صلاة الجمعة (فيديو)' }, { id: 'meetings', label: 'اللقاءات والاستفتاءات' }, { id: 'documentaries', label: 'وثائقيات' } ]
                 };
 
+                // تم تعديل الـ div الرئيسي هنا ليعتمد على سكرول الأب
                 return (
-                    <div className="flex flex-col h-full overflow-y-auto mobile-scroll p-6 animate-fade-in bg-royal-bg z-20 relative">
+                    <div className="flex flex-col w-full p-6 animate-fade-in bg-royal-bg z-20 relative">
                         <button onClick={handleBack} className="self-end mb-4 text-royal-goldDark font-bold flex items-center gap-2 hover:bg-white px-3 py-1 rounded-full shadow-sm border border-royal-gold/20">➜ رجوع</button>
                         <h2 className={`text-3xl font-bold text-royal-goldDark text-center mb-8 ${t.fontHead}`}>
                             {mode === 'books' ? 'أقسام الكتب' : mode === 'audio' ? 'أقسام الصوتيات' : 'أقسام المرئيات'}
@@ -270,8 +311,9 @@
 
             const items = libraryData[mode][subCategory] || [];
             
+            // تم تعديل الـ div الرئيسي هنا ليعتمد على سكرول الأب
             return (
-                <div className="flex flex-col h-full overflow-y-auto mobile-scroll p-6 animate-fade-in bg-royal-bg z-20 relative">
+                <div className="flex flex-col w-full p-6 animate-fade-in bg-royal-bg z-20 relative">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className={`text-2xl font-bold text-royal-ink ${t.fontHead}`}>المحتويات</h2>
                         <button onClick={handleBack} className="text-royal-goldDark font-bold flex items-center gap-2 hover:bg-white px-3 py-1 rounded-full shadow-sm border border-royal-gold/20">➜ رجوع</button>
@@ -286,7 +328,7 @@
                         </button>
                     )}
 
-                    <div className="space-y-3">
+                    <div className="space-y-3 pb-20">
                         {items.length === 0 ? <div className="text-center text-gray-400 py-10">لا يوجد محتوى حالياً</div> : 
                             items.map(item => (
                                 <div key={item.id} className="bg-white rounded-xl border border-royal-gold/20 shadow-sm overflow-hidden">
@@ -302,29 +344,16 @@
                                         <div className="p-4 border-t border-royal-gold/10 space-y-2">
                                             {item.files.map((file, idx) => (
                                                 <div key={idx} className="flex items-center justify-between bg-white p-3 rounded-lg border border-royal-gold/10 hover:border-royal-gold/40 cursor-pointer shadow-sm">
-                                                    <div className="flex items-center gap-3">
-                                                        {mode === 'books' && <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>}
-                                                        {mode === 'audio' && <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>}
-                                                        {mode === 'video' && <svg className="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
-                                                        <span className="text-sm font-medium truncate max-w-[180px] md:max-w-[300px]">{file.name}</span>
+                                                    <div className="flex items-center gap-3 overflow-hidden">
+                                                        {mode === 'books' && <svg className="w-5 h-5 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>}
+                                                        {mode === 'audio' && <svg className="w-5 h-5 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>}
+                                                        {mode === 'video' && <svg className="w-5 h-5 text-purple-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                                                        <span className="text-sm font-medium truncate">{file.name}</span>
                                                     </div>
-                                                    <div className="flex gap-2 items-center">
-                                                        <button 
-                                                            onClick={() => handleOpenFile(file.url)}
-                                                            className="text-xs bg-royal-gold text-white px-3 py-1.5 rounded hover:bg-royal-goldDark font-bold shadow-sm"
-                                                        >
-                                                            فتح
-                                                        </button>
-                                                        {/* زر حذف الملف الفرعي */}
-                                                        {isAdmin && (
-                                                            <button 
-                                                                onClick={(e) => handleDeleteFile(e, item.id, idx)}
-                                                                className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded border border-transparent hover:border-red-200 transition-all"
-                                                                title="حذف الملف"
-                                                            >
-                                                                ✕
-                                                            </button>
-                                                        )}
+                                                    <div className="flex gap-2 items-center shrink-0">
+                                                        {/* تم تحديث استدعاء الدالة هنا */}
+                                                        <button onClick={(e) => handleOpenFile(e, file.url)} className="text-xs bg-royal-gold text-white px-3 py-1.5 rounded hover:bg-royal-goldDark font-bold shadow-sm">فتح</button>
+                                                        {isAdmin && <button onClick={(e) => handleDeleteFile(e, item.id, idx)} className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded border border-transparent hover:border-red-200 transition-all" title="حذف الملف">✕</button>}
                                                     </div>
                                                 </div>
                                             ))}
@@ -503,13 +532,36 @@
                         <div className="absolute inset-0 islamic-bg pointer-events-none z-0"></div>
                         <header className="relative z-10 p-4 md:p-4 flex justify-between items-center gap-4 bg-white/50 backdrop-blur-sm border-b border-royal-gold/10 shadow-sm">
                             <button onClick={() => setShowSidebar(true)} className="md:hidden p-2 text-royal-goldDark hover:bg-royal-gold/10 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg></button>
-                            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView('chat')}><h1 className={`text-xl md:text-2xl font-bold text-royal-ink ${t.fontHead}`}>{t.title}</h1></div>
+                            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView('chat')}>
+                                
+                                {/* --- 🔴 هنا اللوغو الصغير في الهيدر (تم توحيد التصميم) 🔴 --- */}
+                                <div className="w-10 h-10 rounded-full border-2 border-royal-gold/40 p-0.5 bg-white overflow-hidden">
+                                    <img src="https://i.ibb.co/MyJbpPN8/photo.jpg" alt="Small Logo" className="w-full h-full object-cover rounded-full" />
+                                </div>
+                                
+                                <h1 className={`text-xl md:text-2xl font-bold text-royal-ink ${t.fontHead}`}>{t.title}</h1>
+                            </div>
                             <div className="flex items-center gap-2">{session ? (<div className="hidden md:flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-royal-gold text-white flex items-center justify-center font-bold text-xs shadow-sm">{session.user.email.charAt(0).toUpperCase()}</div><button onClick={handleLogout} className="text-xs text-red-400 font-bold hover:text-red-600">خروج</button></div>) : (<button onClick={() => setShowLoginModal(true)} className={`hidden md:block px-4 py-1.5 rounded-full bg-royal-gold text-white text-sm font-bold hover:bg-royal-goldDark shadow-sm ${t.fontHead}`}>دخول</button>)}<button onClick={() => setLang(l => l === 'ar' ? 'en' : 'ar')} className="px-3 py-1 rounded-full border border-royal-gold/30 text-royal-goldDark text-xs font-bold hover:bg-white">{t.langSwitch}</button></div>
                         </header>
                         <main className="flex-1 overflow-y-auto p-4 md:p-6 relative z-10 mobile-scroll space-y-6 min-h-0" ref={mainContainerRef}>
                             {view === 'library' ? (<LibraryView onBack={() => setView('chat')} t={t} isAdmin={isAdmin} />) : view === 'bio' ? (<BiographyView onBack={() => setView('chat')} t={t} />) : (
                                 <>
-                                    {messages.length === 0 ? (<div className="h-full flex flex-col items-center justify-center text-center opacity-100 pb-20"><div className="mb-8 relative group"><div className="w-40 h-40 rounded-full border-4 border-royal-gold/40 p-1 shadow-holy bg-white flex items-center justify-center relative overflow-hidden"><div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-royal-goldDark font-bold"><svg className="w-16 h-16 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div></div></div><div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl w-full px-4 mb-8"><div onClick={() => setView('library')} className="bg-white p-6 rounded-2xl border border-royal-gold/20 shadow-card hover-card cursor-pointer flex flex-col items-center gap-3"><div className="w-12 h-12 bg-royal-bg rounded-full flex items-center justify-center text-royal-goldDark"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg></div><h3 className={`text-xl font-bold text-royal-ink ${t.fontHead}`}>{t.library}</h3><p className="text-sm text-gray-500">كتب، صوتيات، ومرئيات</p></div><div onClick={() => setView('bio')} className="bg-white p-6 rounded-2xl border border-royal-gold/20 shadow-card hover-card cursor-pointer flex flex-col items-center gap-3"><div className="w-12 h-12 bg-royal-bg rounded-full flex items-center justify-center text-royal-goldDark"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div><h3 className={`text-xl font-bold text-royal-ink ${t.fontHead}`}>{t.bio}</h3><p className="text-sm text-gray-500">سيرة حياة السيد الشهيد</p></div></div><div className="flex flex-wrap justify-center gap-2 max-w-2xl">{["فقه المجتمع", "ما وراء الفقه", "الجمعة", "المهدي الموعود"].map((c, i) => (<button key={i} onClick={() => handleSearch(null, c)} className={`px-4 py-2 bg-white border border-royal-gold/30 rounded-full text-sm text-royal-goldDark hover:bg-royal-gold hover:text-white transition shadow-sm ${t.fontHead}`}>{c}</button>))}</div></div>) : (messages.map((msg, index) => (<div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} msg-anim`}><div className={`max-w-[85%] md:max-w-[75%] rounded-2xl p-4 shadow-sm relative ${msg.role === 'user' ? 'bg-royal-userBubble text-royal-ink rounded-br-none' : 'bg-white border border-royal-gold/20 rounded-bl-none'}`}>{msg.image && <div className="mb-3"><img src={msg.image} className="max-h-48 rounded-lg border border-royal-border object-cover" /></div>}{msg.fileData && msg.fileData.type !== 'image' && <div className="mb-3 flex items-center gap-2 bg-gray-50 p-2 rounded border text-xs text-gray-600"><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>{msg.fileData.name}</div>}<div className={`whitespace-pre-line text-lg leading-relaxed ${t.fontText} ${msg.role === 'model' ? 'text-justify' : ''}`}>{msg.text}</div>{msg.role === 'model' && (<div className="mt-3 pt-2 border-t border-gray-100 flex gap-3 justify-end items-center"><button onClick={() => handleSpeak(msg.text)} className={`text-gray-400 hover:text-royal-gold flex items-center gap-1 ${isSpeaking ? 'text-royal-gold' : ''}`}>{isSpeaking && <span className="flex gap-0.5 h-2 items-end"><span className="w-0.5 bg-royal-gold animate-bounce"></span><span className="w-0.5 bg-royal-gold animate-bounce delay-100"></span><span className="w-0.5 bg-royal-gold animate-bounce delay-200"></span></span>}<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button><button onClick={() => navigator.clipboard.writeText(msg.text)} className="text-gray-400 hover:text-royal-gold"><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 0 1 1.04-.208Z" clipRule="evenodd" /></svg></button></div>)}</div></div>)))} {loading && <div className="flex justify-start msg-anim"><div className="bg-white px-4 py-3 rounded-2xl rounded-bl-none border border-royal-gold/20 shadow-sm flex items-center gap-2"><div className="w-2 h-2 bg-royal-gold rounded-full animate-bounce"></div><div className="w-2 h-2 bg-royal-gold rounded-full animate-bounce delay-100"></div><div className="w-2 h-2 bg-royal-gold rounded-full animate-bounce delay-200"></div></div></div>} <div ref={messagesEndRef} /></>)}
+                                    {messages.length === 0 ? (
+                                        
+                                        <div className="min-h-full flex flex-col items-center justify-center text-center opacity-100 pb-20 overflow-y-auto">
+                                            
+                                            {/* --- 🔴 هنا اللوغو الكبير في الصفحة الرئيسية (تم توحيد التصميم) 🔴 --- */}
+                                            <div className="mb-8 relative group">
+                                                <div className="w-40 h-40 rounded-full bg-royal-bg border-4 border-royal-gold flex items-center justify-center overflow-hidden shadow-holy">
+                                                    <img 
+                                                        src="https://i.ibb.co/MyJbpPN8/photo.jpg" 
+                                                        alt="Logo" 
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl w-full px-4 mb-8"><div onClick={() => setView('library')} className="bg-white p-6 rounded-2xl border border-royal-gold/20 shadow-card hover-card cursor-pointer flex flex-col items-center gap-3"><div className="w-12 h-12 bg-royal-bg rounded-full flex items-center justify-center text-royal-goldDark"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg></div><h3 className={`text-xl font-bold text-royal-ink ${t.fontHead}`}>{t.library}</h3><p className="text-sm text-gray-500">كتب، صوتيات، ومرئيات</p></div><div onClick={() => setView('bio')} className="bg-white p-6 rounded-2xl border border-royal-gold/20 shadow-card hover-card cursor-pointer flex flex-col items-center gap-3"><div className="w-12 h-12 bg-royal-bg rounded-full flex items-center justify-center text-royal-goldDark"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div><h3 className={`text-xl font-bold text-royal-ink ${t.fontHead}`}>{t.bio}</h3><p className="text-sm text-gray-500">سيرة حياة السيد الشهيد</p></div></div><div className="flex flex-wrap justify-center gap-2 max-w-2xl pb-10">{["فقه المجتمع", "ما وراء الفقه", "الجمعة", "المهدي الموعود"].map((c, i) => (<button key={i} onClick={() => handleSearch(null, c)} className={`px-4 py-2 bg-white border border-royal-gold/30 rounded-full text-sm text-royal-goldDark hover:bg-royal-gold hover:text-white transition shadow-sm ${t.fontHead}`}>{c}</button>))}</div></div>) : (messages.map((msg, index) => (<div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} msg-anim`}><div className={`max-w-[85%] md:max-w-[75%] rounded-2xl p-4 shadow-sm relative ${msg.role === 'user' ? 'bg-royal-userBubble text-royal-ink rounded-br-none' : 'bg-white border border-royal-gold/20 rounded-bl-none'}`}>{msg.image && <div className="mb-3"><img src={msg.image} className="max-h-48 rounded-lg border border-royal-border object-cover" /></div>}{msg.fileData && msg.fileData.type !== 'image' && <div className="mb-3 flex items-center gap-2 bg-gray-50 p-2 rounded border text-xs text-gray-600"><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>{msg.fileData.name}</div>}<div className={`whitespace-pre-line text-lg leading-relaxed ${t.fontText} ${msg.role === 'model' ? 'text-justify' : ''}`}>{msg.text}</div>{msg.role === 'model' && (<div className="mt-3 pt-2 border-t border-gray-100 flex gap-3 justify-end items-center"><button onClick={() => handleSpeak(msg.text)} className={`text-gray-400 hover:text-royal-gold flex items-center gap-1 ${isSpeaking ? 'text-royal-gold' : ''}`}>{isSpeaking && <span className="flex gap-0.5 h-2 items-end"><span className="w-0.5 bg-royal-gold animate-bounce"></span><span className="w-0.5 bg-royal-gold animate-bounce delay-100"></span><span className="w-0.5 bg-royal-gold animate-bounce delay-200"></span></span>}<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button><button onClick={() => navigator.clipboard.writeText(msg.text)} className="text-gray-400 hover:text-royal-gold"><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 0 1 1.04-.208Z" clipRule="evenodd" /></svg></button></div>)}</div></div>)))} {loading && <div className="flex justify-start msg-anim"><div className="bg-white px-4 py-3 rounded-2xl rounded-bl-none border border-royal-gold/20 shadow-sm flex items-center gap-2"><div className="w-2 h-2 bg-royal-gold rounded-full animate-bounce"></div><div className="w-2 h-2 bg-royal-gold rounded-full animate-bounce delay-100"></div><div className="w-2 h-2 bg-royal-gold rounded-full animate-bounce delay-200"></div></div></div>} <div ref={messagesEndRef} /></>)}
                         </main>
                         {view === 'chat' && (<footer className="bg-white border-t border-royal-gold/20 p-4 shadow-up z-20 relative">{selectedFile && <div className="absolute -top-14 right-4 bg-white border border-royal-gold/30 p-2 rounded-lg shadow-lg flex items-center gap-3 msg-anim"><div className="w-8 h-8 bg-royal-bg rounded flex items-center justify-center text-royal-goldDark">{selectedFile.type === 'image' ? <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path fillRule="evenodd" d="M1.5 6a2.25 2.25 0 0 1 2.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6ZM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.97.97a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061Zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z" clipRule="evenodd" /></svg> : <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" /></svg>}</div><div className="text-xs max-w-[150px] truncate"><div className="font-bold text-royal-ink truncate">{selectedFile.name}</div></div><button onClick={() => {setSelectedFile(null); fileInputRef.current.value = ''}} className="text-red-500 hover:bg-red-50 rounded-full p-1">✕</button></div>}<form onSubmit={handleSearch} className="flex items-end gap-2 max-w-4xl mx-auto"><input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*,application/pdf" /><button type="button" onClick={() => fileInputRef.current.click()} className="p-3 mb-1 text-royal-goldDark hover:text-royal-gold hover:bg-royal-bg rounded-full transition-colors"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" /></svg></button><div className="flex-1 bg-royal-bg border border-royal-gold/20 rounded-2xl p-1 flex items-center shadow-inner focus-within:border-royal-gold/50 transition-colors"><textarea value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSearch(e); } }} placeholder={t.placeholder} className={`w-full bg-transparent border-none outline-none px-4 py-3 text-lg font-text resize-none max-h-32 min-h-[50px] ${t.fontText}`} rows="1" /><button type="button" onClick={startListening} className={`p-2 mx-1 rounded-full transition-all ${isListening ? 'text-red-600 bg-red-100 mic-active' : 'text-royal-goldDark/50 hover:text-royal-gold'}`}><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M8.25 4.5a3.75 3.75 0 1 1 7.5 0v8.25a3.75 3.75 0 1 1-7.5 0V4.5Z" /><path d="M6 10.5a.75.75 0 0 1 .75.75v1.5a5.25 5.25 0 1 0 10.5 0v-1.5a.75.75 0 0 1 1.5 0v1.5a6.751 6.751 0 0 1-6 6.709v2.291h3a.75.75 0 0 1 0 1.5h-7.5a.75.75 0 0 1 0-1.5h3v-2.291a6.751 6.751 0 0 1-6-6.709v-1.5A.75.75 0 0 1 6 10.5Z" /></svg></button></div><button type="submit" disabled={loading || (!query && !selectedFile)} className={`p-3 mb-1 rounded-xl transition-all shadow-md flex items-center justify-center ${loading || (!query && !selectedFile) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-royal-gold text-white hover:bg-royal-goldDark hover:scale-105'}`}>{loading ? <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 transform rotate-180"><path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" /></svg>}</button></form></footer>)}
                     </div>
