@@ -1,161 +1,522 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تراث الصدر - الذكاء الاصطناعي</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تراث الصدر - الموسوعة الشاملة</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;500;600;700&family=Cinzel:wght@400;600;800&display=swap" rel="stylesheet">
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        paper: { 50: '#f9f7f1', 100: '#f0eadd', 200: '#e3d5c0' },
-                        heritage: { gold: '#b47b3e', dark: '#4a3b32', accent: '#8c5e2a' }
+                        royal: { bg: '#fcfbf7', gold: '#c5a059', goldDark: '#9e7e40', ink: '#1a1a1a', border: '#e5e0d0', sidebar: '#f5f2e9', userBubble: '#f0eee6' }
                     },
-                    fontFamily: {
-                        'body': ['Amiri', 'serif'],
-                        'heading': ['Cairo', 'sans-serif'],
-                    }
+                    fontFamily: { 'ar-text': ['Amiri', 'serif'], 'ar-head': ['Reem Kufi', 'sans-serif'], 'en-text': ['Amiri', 'serif'], 'en-head': ['Cinzel', 'serif'] },
+                    boxShadow: { 'holy': '0 10px 40px -10px rgba(197, 160, 89, 0.15)', 'card': '0 4px 20px -2px rgba(0,0,0,0.05)' },
+                    animation: { 'fade-in': 'fadeIn 0.3s ease-in-out' },
+                    keyframes: { fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } } }
                 }
             }
         }
     </script>
     
     <style>
-        body { background-color: #f9f7f1; color: #4a3b32; }
-        .islamic-pattern {
-            background-image: radial-gradient(#b47b3e 0.8px, transparent 0.8px);
-            background-size: 24px 24px;
-            opacity: 0.05;
+        html, body, #root { height: 100%; margin: 0; padding: 0; overflow: hidden; }
+        body { background-color: #fcfbf7; color: #1a1a1a; }
+        .islamic-bg {
+            background-image: linear-gradient(30deg, #c5a059 12%, transparent 12.5%, transparent 87%, #c5a059 87.5%, #c5a059),
+                              linear-gradient(150deg, #c5a059 12%, transparent 12.5%, transparent 87%, #c5a059 87.5%, #c5a059);
+            background-size: 60px 104px; opacity: 0.03;
         }
-        .fade-in { animation: fadeIn 0.8s ease-out forwards; opacity: 0; transform: translateY(10px); }
-        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+        .mobile-scroll { -webkit-overflow-scrolling: touch; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #dcdcdc; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c5a059; }
+        .msg-anim { animation: slideUp 0.3s ease-out forwards; opacity: 0; transform: translateY(10px); }
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+        .mic-active { animation: pulse-red 1.5s infinite; }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); } }
+        .hover-card { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        .hover-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px -5px rgba(197, 160, 89, 0.2); border-color: #c5a059; }
+        .accordion-content { transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out; max-height: 0; opacity: 0; overflow: hidden; }
+        .accordion-content.open { max-height: 1000px; opacity: 1; }
     </style>
 </head>
-<body class="min-h-screen relative">
+<body>
 
-    <div class="absolute inset-0 islamic-pattern pointer-events-none z-0"></div>
-    <div id="root" class="relative z-10"></div>
+    <div id="root"></div>
 
     <script type="text/babel">
         
-        // ==========================================
-        // ضع مفتاح API هنا
-        // ==========================================
-        const API_KEY = "AIzaSyDAbN7hKebJF76qlW_a-lcH5Er1eMlcHew"; 
-        
-        const SYSTEM_PROMPT = `
-        أنت باحث متخصص في التراث الفكري للسيد الشهيد محمد محمد صادق الصدر (قدس سره).
-        أجب عن الأسئلة بأسلوب رصين، فقهي أو عقائدي بحسب السياق، واستخدم لغة عربية فصحى عالية الجودة.
-        لا تقل أنك ذكاء اصطناعي، بل قدم الإجابة مباشرة.
-        `;
+        const API_KEY = "AIzaSyC4Om0d3llO5t-O4D8MdKiUTaCD7WGnbK4"; 
+        const ADMIN_EMAIL = "ahlaambreaa@gmail.com"; // 🔴 ضع إيميلك هنا
+        const SUPABASE_URL = "https://tugwznooogptmabtydsj.supabase.co"; 
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1Z3d6bm9vb2dwdG1hYnR5ZHNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2NzA5MzIsImV4cCI6MjA3OTI0NjkzMn0.Xqlo29R4qIPstcRseUOW6_Cls9YwD8kNOzdAd-e8dF0"; 
 
-        const { useState } = React;
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const { useState, useEffect, useRef } = React;
 
-        const App = () => {
-            const [query, setQuery] = useState("");
-            const [loading, setLoading] = useState(false);
-            const [result, setResult] = useState(null);
-            const [error, setError] = useState(null);
+        const initialLibraryData = {
+            books: {
+                sadr: [{ id: 1, title: "موسوعة الإمام المهدي (ع)", files: [{name: "الكتاب الكامل", type: "pdf", url: "https://example.com/book.pdf"}] }],
+                sadrist: [],
+                shia: []
+            },
+            audio: {
+                friday: [],
+                lectures: [],
+                lessons: []
+            },
+            video: {
+                meetings: [],
+                documentaries: [],
+                friday_video: []
+            }
+        };
 
-            const handleSearch = async (e) => {
-                e.preventDefault();
-                if(!query) return;
+        const BiographyView = ({ onBack, t }) => (
+            <div className="flex flex-col h-full overflow-y-auto mobile-scroll p-6 animate-fade-in relative z-20 bg-royal-bg">
+                <button onClick={onBack} className="self-end mb-4 text-royal-goldDark font-bold flex items-center gap-2 hover:bg-white px-3 py-1 rounded-full shadow-sm border border-royal-gold/20">✕ إغلاق</button>
+                <div className="max-w-3xl mx-auto w-full bg-white p-8 rounded-2xl shadow-card border border-royal-gold/20">
+                    <h2 className={`text-3xl font-bold text-royal-ink text-center mb-6 ${t.fontHead} text-royal-goldDark`}>السيرة العطرة</h2>
+                    <div className="space-y-6 text-lg leading-relaxed text-justify text-gray-700 font-ar-text">
+                        <div className="flex justify-center mb-6">
+                            <div className="w-32 h-32 rounded-full bg-royal-bg border-4 border-royal-gold flex items-center justify-center overflow-hidden shadow-lg">
+                                <svg className="w-16 h-16 text-royal-goldDark/30" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+                            </div>
+                        </div>
+                        <p><strong>الاسم والنسب:</strong> هو السيد محمد بن السيد محمد صادق الصدر.</p>
+                        <p><strong>الولادة:</strong> 17 ربيع الأول 1362 هـ.</p>
+                        <p><strong>الشهادة:</strong> 4 ذي القعدة 1419 هـ.</p>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const LibraryView = ({ onBack, t, isAdmin }) => {
+            const [mode, setMode] = useState('home'); 
+            const [subCategory, setSubCategory] = useState(null); 
+            const [libraryData, setLibraryData] = useState(() => {
+                const saved = localStorage.getItem('sadr_library_db');
+                return saved ? JSON.parse(saved) : initialLibraryData;
+            });
+            const [expandedItem, setExpandedItem] = useState(null);
+            
+            const itemFileInputRef = useRef(null);
+            const [pendingItemName, setPendingItemName] = useState("");
+            const [activeAddContext, setActiveAddContext] = useState(null); 
+
+            useEffect(() => {
+                localStorage.setItem('sadr_library_db', JSON.stringify(libraryData));
+            }, [libraryData]);
+
+            const handleBack = () => {
+                if (subCategory) { setSubCategory(null); return; }
+                if (mode !== 'home') { setMode('home'); return; }
+                onBack(); 
+            };
+
+            const handleOpenFile = (url) => {
+                if (url) window.open(url, '_blank');
+                else alert("عذراً، رابط الملف غير متوفر.");
+            };
+
+            const startAddCollection = () => {
+                const name = prompt("أدخل عنوان الكتاب/المجموعة:");
+                if (!name) return;
+                setPendingItemName(name);
+                setActiveAddContext({ type: 'new_collection' });
+                itemFileInputRef.current.click();
+            };
+
+            const startAddFileToCollection = (collectionId) => {
+                setActiveAddContext({ type: 'add_to_collection', id: collectionId });
+                itemFileInputRef.current.click();
+            };
+
+            const handleFileChange = (e) => {
+                const file = e.target.files[0];
+                if (!file || !activeAddContext) return;
+
+                const fileName = file.name;
+                const fileUrl = URL.createObjectURL(file); 
                 
-                setLoading(true);
-                setResult(null);
-                setError(null);
+                let fileType = 'pdf';
+                if (mode === 'audio') fileType = 'audio';
+                if (mode === 'video') fileType = 'video';
 
-                try {
-                    if(!API_KEY || API_KEY.includes("ضع_مفتاحك")) {
-                        alert("الرجاء التأكد من وضع مفتاح API");
-                        setLoading(false);
-                        return;
-                    }
+                if (activeAddContext.type === 'new_collection') {
+                    const newCollection = {
+                        id: Date.now(),
+                        title: pendingItemName,
+                        files: [{ name: fileName, type: fileType, url: fileUrl }] 
+                    };
+                    setLibraryData(prev => ({
+                        ...prev,
+                        [mode]: {
+                            ...prev[mode],
+                            [subCategory]: [...prev[mode][subCategory], newCollection]
+                        }
+                    }));
+                } else if (activeAddContext.type === 'add_to_collection') {
+                    setLibraryData(prev => ({
+                        ...prev,
+                        [mode]: {
+                            ...prev[mode],
+                            [subCategory]: prev[mode][subCategory].map(item => 
+                                item.id === activeAddContext.id 
+                                ? { ...item, files: [...item.files, { name: fileName, type: fileType, url: fileUrl }] }
+                                : item
+                            )
+                        }
+                    }));
+                }
+                
+                e.target.value = '';
+                setActiveAddContext(null);
+                setPendingItemName("");
+            };
 
-                    // ============================================================
-                    // التحديث: استخدام الموديل الموجود في قائمتك (gemini-2.0-flash)
-                    // ============================================================
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: SYSTEM_PROMPT + "\n\nالسؤال: " + query }] }]
-                        })
-                    });
-
-                    const data = await response.json();
-                    
-                    if (data.error) {
-                        throw new Error(data.error.message);
-                    }
-
-                    if (data.candidates && data.candidates[0].content) {
-                        setResult({
-                            question: query,
-                            answer: data.candidates[0].content.parts[0].text,
-                            source: "تحليل تراث السيد الصدر (قدس سره)"
-                        });
-                    }
-                } catch (error) {
-                    console.error(error);
-                    setError(error.message);
-                } finally {
-                    setLoading(false);
+            const handleDelete = (e, id) => {
+                e.stopPropagation();
+                if (confirm("هل أنت متأكد من حذف الكتاب/المجموعة بالكامل؟")) {
+                    setLibraryData(prev => ({
+                        ...prev,
+                        [mode]: {
+                            ...prev[mode],
+                            [subCategory]: prev[mode][subCategory].filter(item => item.id !== id)
+                        }
+                    }));
                 }
             };
 
-            return (
-                <div className="max-w-3xl mx-auto px-6 py-12 flex flex-col min-h-screen">
-                    <header className={`text-center transition-all duration-500 ${result || error ? 'mt-4 mb-8' : 'mt-20 mb-12'}`}>
-                        <h1 className="text-4xl md:text-5xl font-heading font-bold text-heritage-dark">تراث الصدر</h1>
-                        <p className="mt-4 text-lg text-heritage-dark/70 font-body">بحث في الموسوعة الفقهية والعقائدية</p>
-                    </header>
+            // دالة حذف ملف فرعي
+            const handleDeleteFile = (e, itemId, fileIndex) => {
+                e.stopPropagation();
+                if (confirm("هل أنت متأكد من حذف هذا الملف؟")) {
+                    setLibraryData(prev => ({
+                        ...prev,
+                        [mode]: {
+                            ...prev[mode],
+                            [subCategory]: prev[mode][subCategory].map(item => 
+                                item.id === itemId 
+                                ? { ...item, files: item.files.filter((_, idx) => idx !== fileIndex) }
+                                : item
+                            )
+                        }
+                    }));
+                }
+            };
 
-                    <div className="sticky top-4 z-20 mb-10">
-                        <div className="shadow-lg rounded-2xl bg-white p-2 border border-paper-200">
-                            <form onSubmit={handleSearch} className="flex items-center">
-                                <input 
-                                    type="text" 
-                                    value={query}
-                                    onChange={(e) => setQuery(e.target.value)}
-                                    className="flex-1 bg-transparent border-none outline-none text-xl font-body px-4 text-heritage-dark h-12"
-                                    placeholder="اكتب سؤالك هنا..."
-                                />
-                                <button type="submit" disabled={loading} className="bg-heritage-gold text-white px-6 py-2 rounded-xl font-heading hover:bg-heritage-accent transition font-bold">
-                                    {loading ? 'جاري البحث...' : 'بحث'}
-                                </button>
-                            </form>
+            if (mode === 'home') {
+                return (
+                    <div className="flex flex-col h-full overflow-y-auto mobile-scroll p-6 animate-fade-in bg-royal-bg z-20 relative">
+                        <button onClick={handleBack} className="self-end mb-4 text-royal-goldDark font-bold flex items-center gap-2 hover:bg-white px-3 py-1 rounded-full shadow-sm border border-royal-gold/20">✕ خروج</button>
+                        <h2 className={`text-3xl font-bold text-royal-goldDark text-center mb-8 ${t.fontHead}`}>أقسام المكتبة</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full">
+                            {[
+                                { id: 'books', title: 'الكتب والمؤلفات', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' },
+                                { id: 'audio', title: 'التسجيلات الصوتية', icon: 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z' },
+                                { id: 'video', title: 'المرئيات والفيديو', icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z' }
+                            ].map(section => (
+                                <div key={section.id} onClick={() => setMode(section.id)} className="bg-white p-8 rounded-2xl shadow-card border border-royal-gold/10 hover-card cursor-pointer flex flex-col items-center text-center group">
+                                    <div className="w-16 h-16 bg-royal-bg rounded-full flex items-center justify-center mb-4 text-royal-goldDark group-hover:bg-royal-gold group-hover:text-white transition-colors">
+                                        <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={section.icon} /></svg>
+                                    </div>
+                                    <h3 className="font-bold text-2xl mb-2 text-royal-ink">{section.title}</h3>
+                                </div>
+                            ))}
                         </div>
                     </div>
+                );
+            }
 
-                    {error && (
-                        <div className="fade-in bg-red-50 border border-red-200 rounded-xl p-4 text-center mb-8">
-                             <p className="text-red-700 font-heading font-bold mb-2">حدث خطأ تقني</p>
-                             <p className="text-red-600 font-body text-sm" dir="ltr">{error}</p>
+            if (!subCategory) {
+                const categories = {
+                    books: [ { id: 'sadr', label: 'كتب السيد الشهيد' }, { id: 'sadrist', label: 'المكتبة الصدرية' }, { id: 'shia', label: 'المكتبة الشيعية العامة' } ],
+                    audio: [ { id: 'friday', label: 'خطب صلاة الجمعة' }, { id: 'lectures', label: 'محاضرات عامة' }, { id: 'lessons', label: 'الدروس الحوزوية' } ],
+                    video: [ { id: 'friday_video', label: 'صلاة الجمعة (فيديو)' }, { id: 'meetings', label: 'اللقاءات والاستفتاءات' }, { id: 'documentaries', label: 'وثائقيات' } ]
+                };
+
+                return (
+                    <div className="flex flex-col h-full overflow-y-auto mobile-scroll p-6 animate-fade-in bg-royal-bg z-20 relative">
+                        <button onClick={handleBack} className="self-end mb-4 text-royal-goldDark font-bold flex items-center gap-2 hover:bg-white px-3 py-1 rounded-full shadow-sm border border-royal-gold/20">➜ رجوع</button>
+                        <h2 className={`text-3xl font-bold text-royal-goldDark text-center mb-8 ${t.fontHead}`}>
+                            {mode === 'books' ? 'أقسام الكتب' : mode === 'audio' ? 'أقسام الصوتيات' : 'أقسام المرئيات'}
+                        </h2>
+                        <div className="flex flex-col gap-4 max-w-2xl mx-auto w-full">
+                            {categories[mode].map(cat => (
+                                <button key={cat.id} onClick={() => setSubCategory(cat.id)} className="p-5 bg-white border border-royal-gold/20 rounded-xl text-xl font-bold text-royal-ink shadow-sm hover:bg-royal-gold hover:text-white transition-all text-right flex justify-between items-center group">
+                                    <span>{cat.label}</span>
+                                    <span className="text-royal-goldDark group-hover:text-white opacity-50 text-sm">تصفح ➜</span>
+                                </button>
+                            ))}
                         </div>
+                    </div>
+                );
+            }
+
+            const items = libraryData[mode][subCategory] || [];
+            
+            return (
+                <div className="flex flex-col h-full overflow-y-auto mobile-scroll p-6 animate-fade-in bg-royal-bg z-20 relative">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className={`text-2xl font-bold text-royal-ink ${t.fontHead}`}>المحتويات</h2>
+                        <button onClick={handleBack} className="text-royal-goldDark font-bold flex items-center gap-2 hover:bg-white px-3 py-1 rounded-full shadow-sm border border-royal-gold/20">➜ رجوع</button>
+                    </div>
+
+                    <input type="file" ref={itemFileInputRef} onChange={handleFileChange} className="hidden" accept={mode === 'books' ? ".pdf,.doc,.docx" : mode === 'audio' ? "audio/*" : "video/*"} />
+
+                    {isAdmin && (
+                        <button onClick={startAddCollection} className="w-full mb-4 p-4 border-2 border-dashed border-royal-gold/40 text-royal-goldDark font-bold rounded-xl hover:bg-royal-gold/5 transition flex items-center justify-center gap-2">
+                            <span className="text-2xl">+</span> 
+                            {mode === 'books' ? 'إضافة كتاب جديد' : mode === 'audio' ? 'إضافة مجموعة صوتية' : 'إضافة مجموعة فيديو'}
+                        </button>
                     )}
 
-                    {result && (
-                        <div className="fade-in bg-white rounded-xl border border-paper-200 shadow-xl overflow-hidden p-8">
-                            <h3 className="font-heading text-heritage-gold font-bold mb-4 text-lg">السؤال: {result.question}</h3>
-                            <div className="prose prose-xl max-w-none text-heritage-dark font-body leading-loose text-justify whitespace-pre-line">
-                                {result.answer}
-                            </div>
-                        </div>
-                    )}
+                    <div className="space-y-3">
+                        {items.length === 0 ? <div className="text-center text-gray-400 py-10">لا يوجد محتوى حالياً</div> : 
+                            items.map(item => (
+                                <div key={item.id} className="bg-white rounded-xl border border-royal-gold/20 shadow-sm overflow-hidden">
+                                    <div onClick={() => setExpandedItem(expandedItem === item.id ? null : item.id)} className="p-4 flex justify-between items-center cursor-pointer hover:bg-gray-50 bg-white z-10 relative">
+                                        <div className="flex items-center gap-3">
+                                            <span className={`transform transition-transform duration-300 text-royal-goldDark ${expandedItem === item.id ? 'rotate-180' : ''}`}>▼</span>
+                                            <span className="font-bold text-lg text-royal-ink">{item.title}</span>
+                                        </div>
+                                        {isAdmin && <button onClick={(e) => handleDelete(e, item.id)} className="text-red-400 hover:text-red-600 text-xs px-2 py-1 border border-red-200 rounded bg-white">حذف المجموعة</button>}
+                                    </div>
+                                    
+                                    <div className={`accordion-content bg-royal-bg/30 ${expandedItem === item.id ? 'open' : ''}`}>
+                                        <div className="p-4 border-t border-royal-gold/10 space-y-2">
+                                            {item.files.map((file, idx) => (
+                                                <div key={idx} className="flex items-center justify-between bg-white p-3 rounded-lg border border-royal-gold/10 hover:border-royal-gold/40 cursor-pointer shadow-sm">
+                                                    <div className="flex items-center gap-3">
+                                                        {mode === 'books' && <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>}
+                                                        {mode === 'audio' && <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>}
+                                                        {mode === 'video' && <svg className="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                                                        <span className="text-sm font-medium truncate max-w-[180px] md:max-w-[300px]">{file.name}</span>
+                                                    </div>
+                                                    <div className="flex gap-2 items-center">
+                                                        <button 
+                                                            onClick={() => handleOpenFile(file.url)}
+                                                            className="text-xs bg-royal-gold text-white px-3 py-1.5 rounded hover:bg-royal-goldDark font-bold shadow-sm"
+                                                        >
+                                                            فتح
+                                                        </button>
+                                                        {/* زر حذف الملف الفرعي */}
+                                                        {isAdmin && (
+                                                            <button 
+                                                                onClick={(e) => handleDeleteFile(e, item.id, idx)}
+                                                                className="text-xs text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded border border-transparent hover:border-red-200 transition-all"
+                                                                title="حذف الملف"
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {isAdmin && (
+                                                <button onClick={() => startAddFileToCollection(item.id)} className="w-full mt-2 py-2 border border-dashed border-royal-gold/30 text-royal-goldDark text-sm font-bold rounded hover:bg-white">
+                                                    + إضافة ملف للقائمة
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        }
+                    </div>
                 </div>
             );
         };
 
+        const App = () => {
+            const [lang, setLang] = useState('ar');
+            const [view, setView] = useState('chat');
+            const [messages, setMessages] = useState([]); 
+            const [query, setQuery] = useState("");
+            const [loading, setLoading] = useState(false);
+            const [history, setHistory] = useState([]);
+            const [showSidebar, setShowSidebar] = useState(false);
+            const [session, setSession] = useState(null);
+            const [showLoginModal, setShowLoginModal] = useState(false);
+            const [loginStep, setLoginStep] = useState('main'); 
+            const [emailInput, setEmailInput] = useState("");
+            const [passwordInput, setPasswordInput] = useState("");
+            const [authError, setAuthError] = useState(null);
+            const [isLoginLoading, setIsLoginLoading] = useState(false);
+            const [isSignUpMode, setIsSignUpMode] = useState(false);
+            const [isSpeaking, setIsSpeaking] = useState(false);
+            const [isListening, setIsListening] = useState(false);
+            const [selectedFile, setSelectedFile] = useState(null); 
+            
+            const mainContainerRef = useRef(null);
+            const fileInputRef = useRef(null);
+            const messagesEndRef = useRef(null);
+
+            const isAdmin = session?.user?.email === ADMIN_EMAIL;
+
+            const UI_TEXT = {
+                ar: { title: "تُراث الصَدْر", subtitle: "الموسوعة الذكية", placeholder: "اكتب رسالتك هنا...", langSwitch: "En", newChat: "جلسة جديدة", history: "السجل", library: "المكتبة الشاملة", bio: "السيرة العطرة", fontHead: 'font-ar-head', fontText: 'font-ar-text' },
+                en: { title: "AL-SADR", subtitle: "Legacy AI", placeholder: "Type your message...", langSwitch: "عربي", newChat: "New Session", history: "History", library: "The Library", bio: "Biography", fontHead: 'font-en-head', fontText: 'font-en-text' }
+            };
+            const t = UI_TEXT[lang];
+
+            const scrollToBottom = () => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); };
+            useEffect(() => { scrollToBottom(); }, [messages, loading]);
+
+            useEffect(() => {
+                supabase.auth.getSession().then(({ data: { session } }) => { setSession(session); fetchHistory(session); });
+                const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => { setSession(session); fetchHistory(session); });
+                document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+                return () => subscription.unsubscribe();
+            }, [lang]);
+
+            const fetchHistory = async (currentSession) => {
+                if (currentSession) {
+                    const { data, error } = await supabase.from('history').select('*').order('created_at', { ascending: false });
+                    if (!error && data) setHistory(data);
+                } else {
+                    const localHistory = localStorage.getItem('sadr_history_guest');
+                    setHistory(localHistory ? JSON.parse(localHistory) : []);
+                }
+            };
+
+            const startNewChat = () => { setMessages([]); setQuery(""); setSelectedFile(null); setShowSidebar(false); setView('chat'); window.speechSynthesis.cancel(); setIsSpeaking(false); };
+            const loadChat = (item) => { setMessages([{ role: 'user', text: item.question }, { role: 'model', text: item.answer }]); setShowSidebar(false); setView('chat'); window.speechSynthesis.cancel(); setIsSpeaking(false); };
+            const deleteHistoryItem = async (e, id) => {
+                e.stopPropagation(); setHistory(prev => prev.filter(item => item.id !== id));
+                if (session) await supabase.from('history').delete().eq('id', id);
+                else { const newHistory = history.filter(item => item.id !== id); localStorage.setItem('sadr_history_guest', JSON.stringify(newHistory)); }
+            };
+
+            const handleEmailAuth = async (e) => {
+                e.preventDefault(); setIsLoginLoading(true); setAuthError(null);
+                try {
+                    let result;
+                    if (isSignUpMode) {
+                        result = await supabase.auth.signUp({ email: emailInput, password: passwordInput });
+                        if (!result.error && !result.data.session) { alert("تم إنشاء الحساب! تحقق من بريدك."); setIsLoginLoading(false); return; }
+                    } else { result = await supabase.auth.signInWithPassword({ email: emailInput, password: passwordInput }); }
+                    if (result.error) throw result.error; setShowLoginModal(false);
+                } catch (error) { setAuthError("خطأ في البيانات"); } finally { setIsLoginLoading(false); }
+            };
+            const handleLogout = async () => { await supabase.auth.signOut(); startNewChat(); };
+
+            const cleanText = (text) => text ? text.replace(/\*/g, '').replace(/(\r\n|\n|\r)/gm, "\n") : "";
+
+            const handleSearch = async (e, overrideQuery = null) => {
+                if(e && e.preventDefault) e.preventDefault();
+                const activeQuery = overrideQuery || query;
+                if((!activeQuery || !activeQuery.trim()) && !selectedFile) return;
+                if (view !== 'chat') setView('chat');
+                const userMessage = { role: 'user', text: activeQuery || (selectedFile ? "تحليل الملف" : ""), image: selectedFile ? selectedFile.preview : null, fileData: selectedFile };
+                setMessages(prev => [...prev, userMessage]);
+                setQuery(""); setSelectedFile(null); setLoading(true); 
+                window.speechSynthesis.cancel(); setIsSpeaking(false);
+                
+                const SYSTEM_PROMPT = `أنت "المحقق الرقمي" المتخصص في تراث السيد محمد محمد صادق الصدر. أجب بدقة. لا تستخدم النجوم *.`;
+                try {
+                    const conversationHistory = messages.slice(-6).map(msg => ({ role: msg.role === 'user' ? 'user' : 'model', parts: [{ text: msg.text }] }));
+                    const currentParts = [{ text: SYSTEM_PROMPT + "\n\nالسؤال: " + (activeQuery || "تحليل الملف") }];
+                    if (selectedFile) currentParts.push({ inlineData: { mimeType: selectedFile.mimeType, data: selectedFile.data } });
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`, {
+                        method: "POST", headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ contents: [...conversationHistory, { role: 'user', parts: currentParts }] })
+                    });
+                    const data = await response.json();
+                    if (data.error) throw new Error(data.error.message);
+                    let answerText = cleanText(data.candidates[0].content.parts[0].text);
+                    setMessages(prev => [...prev, { role: 'model', text: answerText }]);
+                    if (session) {
+                        const { data: insertedData } = await supabase.from('history').insert([{ user_id: session.user.id, question: userMessage.text, answer: answerText }]).select();
+                        if (insertedData) setHistory(prev => [{ id: insertedData[0].id, question: userMessage.text, created_at: new Date().toISOString() }, ...prev]);
+                    } else {
+                        const newHistoryItem = { id: Date.now(), question: userMessage.text, answer: answerText, date: new Date().toLocaleDateString() };
+                        const updatedHistory = [newHistoryItem, ...history];
+                        setHistory(updatedHistory);
+                        localStorage.setItem('sadr_history_guest', JSON.stringify(updatedHistory));
+                    }
+                } catch (err) { setMessages(prev => [...prev, { role: 'model', text: "حدث خطأ." }]); } finally { setLoading(false); }
+            };
+
+            const handleFileSelect = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const type = file.type.startsWith('image/') ? 'image' : 'file';
+                        setSelectedFile({ data: reader.result.split(',')[1], mimeType: file.type, name: file.name, type: type, preview: type === 'image' ? reader.result : null });
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            const startListening = () => {
+                if ('webkitSpeechRecognition' in window) {
+                    const recognition = new window.webkitSpeechRecognition();
+                    recognition.lang = lang === 'ar' ? 'ar-IQ' : 'en-US';
+                    recognition.start(); setIsListening(true);
+                    recognition.onresult = (e) => { setQuery(prev => prev + " " + e.results[0][0].transcript); setIsListening(false); };
+                    recognition.onend = () => setIsListening(false);
+                } else { alert("غير مدعوم"); }
+            };
+
+            const handleSpeak = (text) => {
+                if (isSpeaking) { window.speechSynthesis.cancel(); setIsSpeaking(false); return; }
+                const playAudio = () => {
+                    const u = new SpeechSynthesisUtterance(text);
+                    const voices = window.speechSynthesis.getVoices();
+                    const voice = lang === 'ar' ? (voices.find(v => v.lang.includes('ar')) || voices[0]) : (voices.find(v => v.lang.includes('en')) || voices[0]);
+                    if (voice) u.voice = voice;
+                    u.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
+                    u.onend = () => setIsSpeaking(false);
+                    window.speechSynthesis.speak(u);
+                    setIsSpeaking(true);
+                };
+                if (window.speechSynthesis.getVoices().length === 0) { window.speechSynthesis.onvoiceschanged = playAudio; } else { playAudio(); }
+            };
+
+            return (
+                <div className={`flex h-full bg-royal-bg ${lang === 'ar' ? 'flex-row' : 'flex-row-reverse'}`}>
+                    <div className={`fixed inset-y-0 ${lang === 'ar' ? 'right-0' : 'left-0'} z-50 w-72 bg-royal-sidebar border-l border-royal-gold/20 shadow-2xl transform transition-transform duration-300 ${showSidebar ? 'translate-x-0' : (lang === 'ar' ? 'translate-x-full' : '-translate-x-full')} md:relative md:translate-x-0 md:w-80 md:shadow-none flex flex-col`}>
+                        <div className="p-6 border-b border-royal-gold/10 flex justify-between items-center bg-royal-bg/50"><h2 className={`text-lg font-bold text-royal-goldDark ${t.fontHead} truncate`}>{session ? session.user.email.split('@')[0] : t.history}</h2><button onClick={() => setShowSidebar(false)} className="md:hidden text-royal-ink/50">✕</button></div>
+                        <div className="p-4"><button onClick={startNewChat} className={`w-full py-3 px-4 rounded-xl border border-royal-gold/30 text-royal-goldDark hover:bg-royal-gold hover:text-white transition-all flex items-center justify-center gap-2 font-bold shadow-sm ${t.fontHead}`}><span>+</span> {t.newChat}</button></div>
+                        <div className="flex-1 overflow-y-auto p-2 mobile-scroll">{history.length === 0 ? (<div className={`text-center mt-10 text-royal-ink/30 text-sm ${t.fontText}`}>لا يوجد سجل</div>) : (history.map(item => (<div key={item.id} onClick={() => loadChat(item)} className="group p-3 mb-2 rounded-lg cursor-pointer border border-transparent hover:bg-white hover:border-royal-border transition-all"><div className={`text-sm font-bold text-royal-ink truncate mb-1 ${t.fontText}`}>{item.question}</div><div className="flex justify-between items-center"><span className="text-xs text-royal-goldDark/60">{item.created_at ? new Date(item.created_at).toLocaleDateString() : item.date}</span><button onClick={(e) => deleteHistoryItem(e, item.id)} className="text-xs text-red-300 hover:text-red-600 opacity-0 group-hover:opacity-100 px-2">حذف</button></div></div>)))}</div>
+                        <div className="p-4 border-t border-royal-gold/10 md:hidden">{session ? (<button onClick={handleLogout} className="w-full text-red-500 font-bold text-sm">خروج</button>) : (<button onClick={() => {setShowLoginModal(true); setShowSidebar(false);}} className="w-full text-royal-goldDark font-bold text-sm">دخول</button>)}</div>
+                    </div>
+                    {showSidebar && <div className="fixed inset-0 bg-black/20 z-40 md:hidden" onClick={() => setShowSidebar(false)}></div>}
+                    <div className="flex-1 flex flex-col h-full relative overflow-hidden">
+                        <div className="absolute inset-0 islamic-bg pointer-events-none z-0"></div>
+                        <header className="relative z-10 p-4 md:p-4 flex justify-between items-center gap-4 bg-white/50 backdrop-blur-sm border-b border-royal-gold/10 shadow-sm">
+                            <button onClick={() => setShowSidebar(true)} className="md:hidden p-2 text-royal-goldDark hover:bg-royal-gold/10 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg></button>
+                            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView('chat')}><h1 className={`text-xl md:text-2xl font-bold text-royal-ink ${t.fontHead}`}>{t.title}</h1></div>
+                            <div className="flex items-center gap-2">{session ? (<div className="hidden md:flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-royal-gold text-white flex items-center justify-center font-bold text-xs shadow-sm">{session.user.email.charAt(0).toUpperCase()}</div><button onClick={handleLogout} className="text-xs text-red-400 font-bold hover:text-red-600">خروج</button></div>) : (<button onClick={() => setShowLoginModal(true)} className={`hidden md:block px-4 py-1.5 rounded-full bg-royal-gold text-white text-sm font-bold hover:bg-royal-goldDark shadow-sm ${t.fontHead}`}>دخول</button>)}<button onClick={() => setLang(l => l === 'ar' ? 'en' : 'ar')} className="px-3 py-1 rounded-full border border-royal-gold/30 text-royal-goldDark text-xs font-bold hover:bg-white">{t.langSwitch}</button></div>
+                        </header>
+                        <main className="flex-1 overflow-y-auto p-4 md:p-6 relative z-10 mobile-scroll space-y-6 min-h-0" ref={mainContainerRef}>
+                            {view === 'library' ? (<LibraryView onBack={() => setView('chat')} t={t} isAdmin={isAdmin} />) : view === 'bio' ? (<BiographyView onBack={() => setView('chat')} t={t} />) : (
+                                <>
+                                    {messages.length === 0 ? (<div className="h-full flex flex-col items-center justify-center text-center opacity-100 pb-20"><div className="mb-8 relative group"><div className="w-40 h-40 rounded-full border-4 border-royal-gold/40 p-1 shadow-holy bg-white flex items-center justify-center relative overflow-hidden"><div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-royal-goldDark font-bold"><svg className="w-16 h-16 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg></div></div></div><div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl w-full px-4 mb-8"><div onClick={() => setView('library')} className="bg-white p-6 rounded-2xl border border-royal-gold/20 shadow-card hover-card cursor-pointer flex flex-col items-center gap-3"><div className="w-12 h-12 bg-royal-bg rounded-full flex items-center justify-center text-royal-goldDark"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg></div><h3 className={`text-xl font-bold text-royal-ink ${t.fontHead}`}>{t.library}</h3><p className="text-sm text-gray-500">كتب، صوتيات، ومرئيات</p></div><div onClick={() => setView('bio')} className="bg-white p-6 rounded-2xl border border-royal-gold/20 shadow-card hover-card cursor-pointer flex flex-col items-center gap-3"><div className="w-12 h-12 bg-royal-bg rounded-full flex items-center justify-center text-royal-goldDark"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div><h3 className={`text-xl font-bold text-royal-ink ${t.fontHead}`}>{t.bio}</h3><p className="text-sm text-gray-500">سيرة حياة السيد الشهيد</p></div></div><div className="flex flex-wrap justify-center gap-2 max-w-2xl">{["فقه المجتمع", "ما وراء الفقه", "الجمعة", "المهدي الموعود"].map((c, i) => (<button key={i} onClick={() => handleSearch(null, c)} className={`px-4 py-2 bg-white border border-royal-gold/30 rounded-full text-sm text-royal-goldDark hover:bg-royal-gold hover:text-white transition shadow-sm ${t.fontHead}`}>{c}</button>))}</div></div>) : (messages.map((msg, index) => (<div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} msg-anim`}><div className={`max-w-[85%] md:max-w-[75%] rounded-2xl p-4 shadow-sm relative ${msg.role === 'user' ? 'bg-royal-userBubble text-royal-ink rounded-br-none' : 'bg-white border border-royal-gold/20 rounded-bl-none'}`}>{msg.image && <div className="mb-3"><img src={msg.image} className="max-h-48 rounded-lg border border-royal-border object-cover" /></div>}{msg.fileData && msg.fileData.type !== 'image' && <div className="mb-3 flex items-center gap-2 bg-gray-50 p-2 rounded border text-xs text-gray-600"><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>{msg.fileData.name}</div>}<div className={`whitespace-pre-line text-lg leading-relaxed ${t.fontText} ${msg.role === 'model' ? 'text-justify' : ''}`}>{msg.text}</div>{msg.role === 'model' && (<div className="mt-3 pt-2 border-t border-gray-100 flex gap-3 justify-end items-center"><button onClick={() => handleSpeak(msg.text)} className={`text-gray-400 hover:text-royal-gold flex items-center gap-1 ${isSpeaking ? 'text-royal-gold' : ''}`}>{isSpeaking && <span className="flex gap-0.5 h-2 items-end"><span className="w-0.5 bg-royal-gold animate-bounce"></span><span className="w-0.5 bg-royal-gold animate-bounce delay-100"></span><span className="w-0.5 bg-royal-gold animate-bounce delay-200"></span></span>}<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg></button><button onClick={() => navigator.clipboard.writeText(msg.text)} className="text-gray-400 hover:text-royal-gold"><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 0 1 1.04-.208Z" clipRule="evenodd" /></svg></button></div>)}</div></div>)))} {loading && <div className="flex justify-start msg-anim"><div className="bg-white px-4 py-3 rounded-2xl rounded-bl-none border border-royal-gold/20 shadow-sm flex items-center gap-2"><div className="w-2 h-2 bg-royal-gold rounded-full animate-bounce"></div><div className="w-2 h-2 bg-royal-gold rounded-full animate-bounce delay-100"></div><div className="w-2 h-2 bg-royal-gold rounded-full animate-bounce delay-200"></div></div></div>} <div ref={messagesEndRef} /></>)}
+                        </main>
+                        {view === 'chat' && (<footer className="bg-white border-t border-royal-gold/20 p-4 shadow-up z-20 relative">{selectedFile && <div className="absolute -top-14 right-4 bg-white border border-royal-gold/30 p-2 rounded-lg shadow-lg flex items-center gap-3 msg-anim"><div className="w-8 h-8 bg-royal-bg rounded flex items-center justify-center text-royal-goldDark">{selectedFile.type === 'image' ? <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path fillRule="evenodd" d="M1.5 6a2.25 2.25 0 0 1 2.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6ZM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.97.97a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061Zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z" clipRule="evenodd" /></svg> : <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" /></svg>}</div><div className="text-xs max-w-[150px] truncate"><div className="font-bold text-royal-ink truncate">{selectedFile.name}</div></div><button onClick={() => {setSelectedFile(null); fileInputRef.current.value = ''}} className="text-red-500 hover:bg-red-50 rounded-full p-1">✕</button></div>}<form onSubmit={handleSearch} className="flex items-end gap-2 max-w-4xl mx-auto"><input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*,application/pdf" /><button type="button" onClick={() => fileInputRef.current.click()} className="p-3 mb-1 text-royal-goldDark hover:text-royal-gold hover:bg-royal-bg rounded-full transition-colors"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13" /></svg></button><div className="flex-1 bg-royal-bg border border-royal-gold/20 rounded-2xl p-1 flex items-center shadow-inner focus-within:border-royal-gold/50 transition-colors"><textarea value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSearch(e); } }} placeholder={t.placeholder} className={`w-full bg-transparent border-none outline-none px-4 py-3 text-lg font-text resize-none max-h-32 min-h-[50px] ${t.fontText}`} rows="1" /><button type="button" onClick={startListening} className={`p-2 mx-1 rounded-full transition-all ${isListening ? 'text-red-600 bg-red-100 mic-active' : 'text-royal-goldDark/50 hover:text-royal-gold'}`}><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M8.25 4.5a3.75 3.75 0 1 1 7.5 0v8.25a3.75 3.75 0 1 1-7.5 0V4.5Z" /><path d="M6 10.5a.75.75 0 0 1 .75.75v1.5a5.25 5.25 0 1 0 10.5 0v-1.5a.75.75 0 0 1 1.5 0v1.5a6.751 6.751 0 0 1-6 6.709v2.291h3a.75.75 0 0 1 0 1.5h-7.5a.75.75 0 0 1 0-1.5h3v-2.291a6.751 6.751 0 0 1-6-6.709v-1.5A.75.75 0 0 1 6 10.5Z" /></svg></button></div><button type="submit" disabled={loading || (!query && !selectedFile)} className={`p-3 mb-1 rounded-xl transition-all shadow-md flex items-center justify-center ${loading || (!query && !selectedFile) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-royal-gold text-white hover:bg-royal-goldDark hover:scale-105'}`}>{loading ? <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 transform rotate-180"><path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" /></svg>}</button></form></footer>)}
+                    </div>
+                    {showLoginModal && (<div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowLoginModal(false)}><div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden modal-enter relative" onClick={e => e.stopPropagation()}>{isLoginLoading && <div className="absolute inset-0 bg-white/80 z-20 flex items-center justify-center flex-col gap-3"><div className="animate-spin h-8 w-8 border-4 border-royal-gold border-t-transparent rounded-full"></div></div>}<div className="p-6"><h3 className={`text-xl font-bold text-royal-ink text-center mb-6 ${t.fontHead}`}>{loginStep === 'main' ? 'تسجيل الدخول' : (isSignUpMode ? 'إنشاء حساب' : 'دخول')}</h3>{authError && <div className="mb-4 p-2 bg-red-50 text-red-600 text-xs rounded text-center font-bold">{authError}</div>}{loginStep === 'main' ? (<div className="space-y-3"><button onClick={() => {setLoginStep('email'); setIsSignUpMode(false)}} className={`w-full p-3 bg-royal-gold text-white font-bold rounded-xl hover:bg-royal-goldDark transition shadow-lg ${t.fontHead}`}>البريد الإلكتروني</button><button onClick={() => {setLoginStep('email'); setIsSignUpMode(true)}} className="w-full p-3 text-royal-goldDark font-bold text-xs hover:underline">إنشاء حساب جديد</button></div>) : (<form onSubmit={handleEmailAuth} className="space-y-4"><div><label className="text-xs font-bold text-gray-500 mb-1 block mr-1">البريد</label><input type="email" dir="ltr" required value={emailInput} onChange={(e) => setEmailInput(e.target.value)} className="w-full p-3 border border-royal-gold/30 rounded-xl outline-none focus:border-royal-gold bg-royal-bg text-left" /></div><div><label className="text-xs font-bold text-gray-500 mb-1 block mr-1">كلمة المرور</label><input type="password" dir="ltr" required value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} className="w-full p-3 border border-royal-gold/30 rounded-xl outline-none focus:border-royal-gold bg-royal-bg text-left" /></div><div className="flex gap-2 pt-2"><button type="button" onClick={() => setLoginStep('main')} className="flex-1 py-3 border border-gray-200 text-gray-500 font-bold rounded-xl hover:bg-gray-50">رجوع</button><button type="submit" className="flex-[2] py-3 bg-royal-gold text-white font-bold rounded-xl hover:bg-royal-goldDark shadow-lg">{isSignUpMode ? 'تسجيل' : 'دخول'}</button></div></form>)}</div></div></div>)}
+                </div>
+            );
+        };
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>
