@@ -61,7 +61,7 @@
     <script type="text/babel">
         
         // --- إعدادات الاتصال ---
-        const API_KEY = "AIzaSyANoOwC5Myt_e4cja2w7EYhzKgnBoYESys"; 
+        const API_KEY = "AIzaSyCWuEENMXWld664BEGn6qqz_opAOb6kKy0"; 
         const ADMIN_EMAIL = "ahlaambreaa@gmail.com"; 
         const SUPABASE_URL = "https://tugwznooogptmabtydsj.supabase.co"; 
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1Z3d6bm9vb2dwdG1hYnR5ZHNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2NzA5MzIsImV4cCI6MjA3OTI0NjkzMn0.Xqlo29R4qIPstcRseUOW6_Cls9YwD8kNOzdAd-e8dF0"; 
@@ -282,6 +282,38 @@
             const UI_TEXT = { ar: { title: "تُراث الصَدْر", langSwitch: "En", newChat: "جلسة جديدة", history: "السجل", fontHead: 'font-ar-head', fontText: 'font-ar-text' }, en: { title: "AL-SADR", langSwitch: "عربي", newChat: "New Session", history: "History", fontHead: 'font-en-head', fontText: 'font-en-text' } };
             const t = UI_TEXT[lang];
 
+            // --- حل مشكلة زر الرجوع (Hash Navigation) ---
+            useEffect(() => {
+                const handleHashChange = () => {
+                    const hash = window.location.hash.replace('#', '');
+                    if (hash === 'library') {
+                        if (view !== 'library') setView('library');
+                    } else if (hash === 'bio') {
+                        if (view !== 'bio') setView('bio');
+                    } else {
+                        if (view !== 'chat') setView('chat');
+                    }
+                    if(window.innerWidth < 768) setShowSidebar(false);
+                };
+
+                window.addEventListener('hashchange', handleHashChange);
+                if (!window.location.hash) window.history.replaceState(null, null, ' ');
+                else handleHashChange();
+
+                return () => window.removeEventListener('hashchange', handleHashChange);
+            }, [view]);
+
+            const navigateTo = (targetView) => {
+                if (targetView === 'chat') {
+                    window.location.hash = ''; 
+                    history.pushState("", document.title, window.location.pathname + window.location.search);
+                } else {
+                    window.location.hash = targetView;
+                }
+                setView(targetView);
+            };
+            // ---------------------------------------------
+
             const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
             useEffect(() => scrollToBottom(), [messages, loading]);
 
@@ -302,8 +334,18 @@
                 }
             };
 
-            const startNewChat = () => { setMessages([]); setQuery(""); setSelectedFile(null); setShowSidebar(false); setView('chat'); window.speechSynthesis.cancel(); setIsSpeaking(false); };
-            const loadChat = (item) => { setMessages([{ role: 'user', text: item.question }, { role: 'model', text: item.answer }]); setShowSidebar(false); setView('chat'); window.speechSynthesis.cancel(); setIsSpeaking(false); };
+            const startNewChat = () => { 
+                setMessages([]); setQuery(""); setSelectedFile(null); setShowSidebar(false); 
+                navigateTo('chat'); 
+                window.speechSynthesis.cancel(); setIsSpeaking(false); 
+            };
+            
+            const loadChat = (item) => { 
+                setMessages([{ role: 'user', text: item.question }, { role: 'model', text: item.answer }]); 
+                setShowSidebar(false); 
+                navigateTo('chat'); 
+                window.speechSynthesis.cancel(); setIsSpeaking(false); 
+            };
             
             const handleEmailAuth = async (e) => {
                 e.preventDefault(); setIsLoginLoading(true); setAuthError(null);
@@ -318,37 +360,124 @@
             };
             const handleLogout = async () => { await supabase.auth.signOut(); startNewChat(); };
 
-            const handleSearch = async (e, overrideQuery = null) => {
-                if(e && e.preventDefault) e.preventDefault();
-                const activeQuery = overrideQuery || query;
-                if((!activeQuery || !activeQuery.trim()) && !selectedFile) return;
-                if (view !== 'chat') setView('chat');
-                const userMessage = { role: 'user', text: activeQuery || (selectedFile ? "تحليل الملف" : ""), image: selectedFile ? selectedFile.preview : null, fileData: selectedFile };
-                setMessages(prev => [...prev, userMessage]);
-                setQuery(""); setSelectedFile(null); setLoading(true); window.speechSynthesis.cancel(); setIsSpeaking(false);
-                
-                const SYSTEM_PROMPT = `أنت "المحقق الرقمي" المتخصص في تراث السيد محمد محمد صادق الصدر. أجب بدقة ورصانة.`;
-                try {
-                    const historyParts = messages.slice(-6).map(msg => ({ role: msg.role === 'user' ? 'user' : 'model', parts: [{ text: msg.text }] }));
-                    const currentParts = [{ text: SYSTEM_PROMPT + "\n\nالسؤال: " + (activeQuery || "تحليل الملف") }];
-                    if (selectedFile) currentParts.push({ inlineData: { mimeType: selectedFile.mimeType, data: selectedFile.data } });
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`, {
-                        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [...historyParts, { role: 'user', parts: currentParts }] })
-                    });
-                    const data = await response.json();
-                    if (data.error) throw new Error(data.error.message);
-                    let answerText = data.candidates[0].content.parts[0].text.replace(/\*/g, '').replace(/(\r\n|\n|\r)/gm, "\n");
-                    setMessages(prev => [...prev, { role: 'model', text: answerText }]);
-                    if (session) {
-                        const { data: inserted } = await supabase.from('history').insert([{ user_id: session.user.id, question: userMessage.text, answer: answerText }]).select();
-                        if (inserted) setHistory(prev => [{ id: inserted[0].id, question: userMessage.text, created_at: new Date().toISOString() }, ...prev]);
-                    } else {
-                        const newItem = { id: Date.now(), question: userMessage.text, answer: answerText, date: new Date().toLocaleDateString() };
-                        setHistory([newItem, ...history]); localStorage.setItem('sadr_history_guest', JSON.stringify([newItem, ...history]));
-                    }
-                } catch (err) { setMessages(prev => [...prev, { role: 'model', text: "عذراً، حدث خطأ في الاتصال." }]); } finally { setLoading(false); }
-            };
+        const handleSearch = async (e, overrideQuery = null) => {
+    if(e && e.preventDefault) e.preventDefault();
+    
+    // 1. التحقق من المدخلات
+    const activeQuery = overrideQuery || query;
+    if((!activeQuery || !activeQuery.trim()) && !selectedFile) return;
 
+    // إذا لم نكن في وضع الشات، ننتقل إليه
+    if (view !== 'chat') navigateTo('chat');
+
+    // 2. إضافة رسالة المستخدم فوراً للشاشة
+    const userMessage = { 
+        role: 'user', 
+        text: activeQuery || (selectedFile ? "تحليل الملف" : ""), 
+        image: selectedFile ? selectedFile.preview : null, 
+        fileData: selectedFile 
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setQuery(""); 
+    setSelectedFile(null); 
+    setLoading(true); 
+    window.speechSynthesis.cancel(); 
+    setIsSpeaking(false);
+
+    // 3. تجهيز التوجيهات (System Prompt)
+    const SYSTEM_PROMPT = `
+**الدور:** أنت "المحقق الرقمي لتراث الصدر".
+**المهمة:** الإجابة حصراً من مؤلفات وخطب السيد محمد محمد صادق الصدر (قدس).
+**الأسلوب:** لغة عربية فصحى، رصينة، علمية.
+**تعليمات:**
+- إذا أرفق المستخدم صورة، قم بقراءة النص فيها وتحليله.
+- اعتذر بلباقة إذا كان السؤال خارج التراث.
+`;
+
+    try {
+        if(!API_KEY || API_KEY.includes("ضع_مفتاحك")) { 
+            throw new Error("يرجى وضع مفتاح API صحيح"); 
+        }
+
+        // 4. تحويل سجل المحادثة السابق لصيغة يفهمها Gemini
+        // نأخذ آخر 6 رسائل فقط للحفاظ على سياق سريع وتوفير التوكنز
+        let contents = messages.slice(-6).map(m => ({
+            role: m.role === 'user' ? 'user' : 'model',
+            parts: [{ text: m.text }]
+        }));
+
+        // تجهيز الرسالة الحالية
+        let currentParts = [{ text: activeQuery || "تحليل المرفق" }];
+
+        // إضافة الصورة إذا وجدت
+        if (selectedFile && selectedFile.type === 'image') {
+            currentParts.push({
+                inlineData: {
+                    mimeType: selectedFile.mimeType,
+                    data: selectedFile.data
+                }
+            });
+        }
+
+        // دمج التوجيهات مع أول رسالة لضمان التزام الموديل
+        // (Gemini عبر الـ API يفضل وضع التعليمات في البداية أو كرسالة system مستقلة في V1Beta)
+        // هنا سندمجها مع السياق الحالي
+        if (contents.length === 0) {
+            currentParts[0].text = SYSTEM_PROMPT + "\n\n" + currentParts[0].text;
+        } else {
+             // إذا كان هناك سياق سابق، نضيف التعليمات كرسالة مخفية في البداية
+             contents.unshift({ role: 'user', parts: [{ text: SYSTEM_PROMPT }] });
+             contents.push({ role: 'model', parts: [{ text: "فهمت، أنا مستعد للإجابة من التراث فقط." }] });
+        }
+
+        // إضافة الرسالة الحالية
+        contents.push({
+            role: "user",
+            parts: currentParts
+        });
+
+        // 5. الاتصال بـ Gemini 2.0 Flash
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                contents: contents,
+                generationConfig: {
+                    temperature: 0.3,
+                    maxOutputTokens: 2000
+                }
+            })
+        });
+
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error?.message || "فشل الاتصال");
+        }
+
+        const data = await response.json();
+        const answerText = data.candidates[0].content.parts[0].text;
+
+        // 6. عرض الإجابة (إضافتها للمحادثة)
+        const botMessage = { role: 'model', text: answerText };
+        setMessages(prev => [...prev, botMessage]);
+        
+        // 7. حفظ السجل
+        if (session) {
+            supabase.from('history').insert([{ user_id: session.user.id, question: userMessage.text, answer: answerText }]).then();
+        } else {
+            const newItem = { id: Date.now(), question: userMessage.text, answer: answerText, date: new Date().toLocaleDateString() };
+            setHistory(prev => [newItem, ...prev]); 
+            localStorage.setItem('sadr_history_guest', JSON.stringify([newItem, ...history]));
+        }
+
+    } catch (err) { 
+        console.error("Error:", err);
+        setMessages(prev => [...prev, { role: 'model', text: `عذراً، حدث خطأ: ${err.message}` }]); 
+    } finally { 
+        setLoading(false); 
+    }
+};
             const handleFileSelect = (e) => {
                 const file = e.target.files[0];
                 if (file) {
@@ -380,21 +509,21 @@
                         <div className="absolute inset-0 islamic-bg pointer-events-none z-0"></div>
                         <header className="relative z-10 p-4 flex justify-between items-center bg-white/50 backdrop-blur-sm border-b border-royal-gold/10 shadow-sm">
                             <button onClick={() => setShowSidebar(true)} className="md:hidden p-2 text-royal-goldDark"><svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg></button>
-                            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setView('chat')}>
+                            <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateTo('chat')}>
                                 <div className="w-10 h-10 rounded-full border-2 border-royal-gold/40 p-0.5 bg-white overflow-hidden"><img src="https://i.ibb.co/MyJbpPN8/photo.jpg" className="w-full h-full object-cover rounded-full" /></div>
                                 <h1 className={`text-xl md:text-2xl font-bold text-royal-ink ${t.fontHead}`}>{t.title}</h1>
                             </div>
                             <div className="flex items-center gap-2">{session ? <div className="hidden md:flex items-center gap-2"><span className="text-xs font-bold text-royal-goldDark">{session.user.email.charAt(0).toUpperCase()}</span><button onClick={handleLogout} className="text-xs text-red-400 font-bold">خروج</button></div> : <button onClick={() => setShowLoginModal(true)} className="hidden md:block px-4 py-1.5 rounded-full bg-royal-gold text-white text-sm font-bold">دخول</button>}<button onClick={() => setLang(l => l === 'ar' ? 'en' : 'ar')} className="px-3 py-1 rounded-full border border-royal-gold/30 text-royal-goldDark text-xs font-bold">{t.langSwitch}</button></div>
                         </header>
                         <main className="flex-1 overflow-y-auto p-4 md:p-6 relative z-10 mobile-scroll space-y-6 min-h-0" ref={mainContainerRef}>
-                            {view === 'library' ? <LibraryView onBack={() => setView('chat')} t={t} isAdmin={isAdmin} /> : view === 'bio' ? <BiographyView onBack={() => setView('chat')} t={t} /> : (
+                            {view === 'library' ? <LibraryView onBack={() => navigateTo('chat')} t={t} isAdmin={isAdmin} /> : view === 'bio' ? <BiographyView onBack={() => navigateTo('chat')} t={t} /> : (
                                 <>
                                     {messages.length === 0 ? (
                                         <div className="min-h-full flex flex-col items-center justify-center text-center pb-20 overflow-y-auto">
                                             <div className="mb-8 relative group"><div className="w-40 h-40 rounded-full bg-royal-bg border-4 border-royal-gold flex items-center justify-center overflow-hidden shadow-holy"><img src="https://i.ibb.co/MyJbpPN8/photo.jpg" className="w-full h-full object-cover" /></div></div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl w-full px-4 mb-8">
-                                                <div onClick={() => setView('library')} className="bg-white p-6 rounded-2xl border border-royal-gold/20 shadow-card hover-card cursor-pointer flex flex-col items-center gap-3"><h3 className={`text-xl font-bold text-royal-ink ${t.fontHead}`}>المكتبة الشاملة</h3><p className="text-sm text-gray-500">كتب، صوتيات، مرئيات</p></div>
-                                                <div onClick={() => setView('bio')} className="bg-white p-6 rounded-2xl border border-royal-gold/20 shadow-card hover-card cursor-pointer flex flex-col items-center gap-3"><h3 className={`text-xl font-bold text-royal-ink ${t.fontHead}`}>السيرة العطرة</h3><p className="text-sm text-gray-500">سيرة حياة السيد الشهيد</p></div>
+                                                <div onClick={() => navigateTo('library')} className="bg-white p-6 rounded-2xl border border-royal-gold/20 shadow-card hover-card cursor-pointer flex flex-col items-center gap-3"><h3 className={`text-xl font-bold text-royal-ink ${t.fontHead}`}>المكتبة الشاملة</h3><p className="text-sm text-gray-500">كتب، صوتيات، مرئيات</p></div>
+                                                <div onClick={() => navigateTo('bio')} className="bg-white p-6 rounded-2xl border border-royal-gold/20 shadow-card hover-card cursor-pointer flex flex-col items-center gap-3"><h3 className={`text-xl font-bold text-royal-ink ${t.fontHead}`}>السيرة العطرة</h3><p className="text-sm text-gray-500">سيرة حياة السيد الشهيد</p></div>
                                             </div>
                                             <div className="flex flex-wrap justify-center gap-2 max-w-2xl pb-10">{["فقه المجتمع", "ما وراء الفقه", "الجمعة", "المهدي الموعود"].map((c, i) => (<button key={i} onClick={() => handleSearch(null, c)} className={`px-4 py-2 bg-white border border-royal-gold/30 rounded-full text-sm text-royal-goldDark hover:bg-royal-gold hover:text-white transition shadow-sm ${t.fontHead}`}>{c}</button>))}</div>
                                         </div>
