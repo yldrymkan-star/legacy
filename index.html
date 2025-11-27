@@ -280,7 +280,24 @@
 
             const isAdmin = session?.user?.email === ADMIN_EMAIL;
             const UI_TEXT = { ar: { title: "تُراث الصَدْر", langSwitch: "En", newChat: "جلسة جديدة", history: "السجل", fontHead: 'font-ar-head', fontText: 'font-ar-text' }, en: { title: "AL-SADR", langSwitch: "عربي", newChat: "New Session", history: "History", fontHead: 'font-en-head', fontText: 'font-en-text' } };
-            const t = UI_TEXT[lang];
+            const t = UI_TEXT[lang]; 
+
+
+            const [knowledgeContext, setKnowledgeContext] = useState("");
+
+    useEffect(() => {
+        fetch('library.txt') 
+            .then(res => {
+                if (!res.ok) throw new Error("الملف غير موجود");
+                return res.text();
+            })
+            .then(text => {
+                console.log("تم تحميل المكتبة: ", text.substring(0, 50) + "..."); // للتأكد
+                setKnowledgeContext(text);
+            })
+            .catch(err => console.error("فشل تحميل المكتبة:", err));
+    }, []);
+    // ============================================
 
             // --- حل مشكلة زر الرجوع (Hash Navigation) ---
             useEffect(() => {
@@ -383,7 +400,25 @@
     setIsSpeaking(false);
 
     // --- التعديل الأول: توجيهات صارمة للأسلوب والتنسيق ---
-    const SYSTEM_PROMPT = `
+    const SYSTEM_PROMPT = ` 
+استند في إجابتك حصراً على النصوص التالية:
+
+**قاعدة المعرفة:**
+"""
+${knowledgeContext}
+"""
+
+**التعليمات:**
+- إذا وجدت الإجابة في النصوص أعلاه، أجب بدقة.
+- إذا لم تجدها، قل: "لا تتوفر هذه المعلومة في المصادر الحالية".
+- ابحث عن الإجابة داخل النصوص المدموجة.
+- عند الإجابة، يجب عليك أن تذكر التوثيق (المصدر ورقم الصفحة) الذي وجدته مرفقاً بالنص داخل القوسين [توثيق:...] في نهاية إجابتك.
+`
+;
+
+    const SYSTEM_PROMPT_AR = `
+
+
 **الدور:** أنت "المحقق الرقمي لتراث الصدر".
 **المهمة:** الإجابة حصراً من مؤلفات وخطب السيد محمد محمد صادق الصدر (قدس).
 **الأسلوب اللغوي:**
@@ -399,7 +434,9 @@
 **تعليمات المحتوى:**
 - إذا أرفق المستخدم صورة، اقرأ النص وحلله فقهياً/عقائدياً.
 - اذكر المصدر (اسم الكتاب) في نهاية النص بجملة لطيفة (مثل: "مستفاد من كتاب...").
-`;
+`
+
+;
 
     try {
         if(!API_KEY || API_KEY.includes("ضع_مفتاحك")) { 
